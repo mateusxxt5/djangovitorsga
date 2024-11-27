@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.core.validators import RegexValidator
 
 class Categoria(models.Model):
     nome = models.CharField(max_length=100)
@@ -22,6 +23,24 @@ class Cliente(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     endereco = models.TextField()
+    
+    # CPF field with validation
+    cpf = models.CharField(
+        max_length=14, 
+        unique=True, 
+        validators=[
+            RegexValidator(
+                regex=r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', 
+                message='CPF must be in the format XXX.XXX.XXX-XX'
+            )
+        ]
+    )
+    
+    # Date of birth field
+    data_nascimento = models.DateField()
+    
+    # Password field (Note: In a real Django project, use Django's built-in authentication)
+    senha = models.CharField(max_length=128)
 
     def __str__(self):
         return self.nome

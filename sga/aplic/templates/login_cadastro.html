@@ -3,46 +3,88 @@
 {% block title %}Login e Cadastro - Smart Padoca{% endblock %}
 
 {% block content %}
-    <!-- Formulário de Login e Cadastro -->
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <!-- Formulário de Login -->
-                <form method="post">
-                    {% csrf_token %}
-                    {{ login_form.as_p }}  <!-- Formulário de Login -->
-                </form>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Login
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control" id="loginEmail" name="email" placeholder="name@example.com" required>
+                                <label for="loginEmail">Endereço de e-mail</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="loginSenha" name="senha" placeholder="Senha" required>
+                                <label for="loginSenha">Senha</label>
+                            </div>
+                            <button class="btn btn-primary w-100" type="submit">Entrar</button>
+                        </form>
+                    </div>
+                </div>
 
                 <!-- Formulário de Cadastro -->
-                <form method="post">
-                    {% csrf_token %}
-                    {{ cadastro_form.as_p }}  <!-- Formulário de Cadastro -->
-                </form>
+                <div class="card">
+                    <div class="card-header">
+                        Cadastro de Novo Cliente
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'cadastro' %}">
+                            {% csrf_token %}
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="nome" name="nome" placeholder="Nome Completo" required>
+                                <label for="nome">Nome Completo</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+                                <label for="email">Endereço de e-mail</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="cpf" name="cpf" placeholder="CPF" 
+                                       pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" 
+                                       title="Digite o CPF no formato XXX.XXX.XXX-XX" 
+                                       required>
+                                <label for="cpf">CPF (formato: XXX.XXX.XXX-XX)</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" required>
+                                <label for="data_nascimento">Data de Nascimento</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <textarea class="form-control" id="endereco" name="endereco" placeholder="Endereço" required></textarea>
+                                <label for="endereco">Endereço</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="senha" name="senha" placeholder="Senha" required>
+                                <label for="senha">Senha</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" placeholder="Confirmar Senha" required>
+                                <label for="confirmar_senha">Confirmar Senha</label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="termos" name="termos" required>
+                                <label class="form-check-label" for="termos">
+                                    Concordo com os termos de uso
+                                </label>
+                            </div>
+                            
+                            <button class="btn btn-success w-100" type="submit">Cadastrar</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    <main class="form-signin w-100 m-auto">
-        <form>
-          <h1 class="h3 mb-3 fw-normal">Faça seu cadastro!</h1>
-      
-          <div class="form-floating">
-            <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-            <label for="floatingInput">Endereço de e-mail</label>
-          </div>
-          <div class="form-floating">
-            <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
-            <label for="floatingPassword">Senha</label>
-          </div>
-      
-          <div class="form-check text-start my-3">
-            <input class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
-            <label class="form-check-label" for="flexCheckDefault">
-              Lembrar
-            </label>
-          </div>
-          <button class="btn btn-primary btn-sm" type="submit" style="width: 150px;">Enviar</button>
-          <p class="mt-5 mb-3 text-body-secondary">© 2024</p>
-        </form>
-      </main>
 {% endblock %}
