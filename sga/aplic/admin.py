@@ -8,10 +8,10 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nome', 'preco', 'categoria', 'data_criacao')  # Exibe os campos no painel
+    list_display = ('id', 'nome', 'preco', 'categoria', 'data_criacao', 'descricao', 'imagem')  # Exibe os campos no painel
     list_filter = ('categoria', 'data_criacao')  # Filtros laterais
     search_fields = ('nome', 'descricao')  # Campo de busca
-    list_editable = ('preco',)  # Permite editar diretamente na lista
+    list_editable = ('preco', 'descricao', 'imagem')  # Permite editar diretamente na lista
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
@@ -34,5 +34,4 @@ class ItemPedidoAdmin(admin.ModelAdmin):
     list_display = ('id', 'pedido', 'produto', 'quantidade')  # Exibe os campos no painel
     list_filter = ('pedido', 'produto')  # Filtros laterais
     search_fields = ('produto__nome',)  # Campo de busca por produto
-
-# Register your models here.
+    

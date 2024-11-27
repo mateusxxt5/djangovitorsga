@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 
 class Categoria(models.Model):
@@ -42,6 +43,3 @@ class ItemPedido(models.Model):
     def __str__(self):
         return f'{self.quantidade} x {self.produto.nome}'
 from django.db import models
-
-
-# Create your models here.
