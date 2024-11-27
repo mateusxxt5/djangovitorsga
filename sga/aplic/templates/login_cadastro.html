@@ -11,14 +11,12 @@
                 <form method="post">
                     {% csrf_token %}
                     {{ login_form.as_p }}  <!-- Formulário de Login -->
-                    <button type="submit" class="btn btn-primary">Login</button>
                 </form>
 
                 <!-- Formulário de Cadastro -->
                 <form method="post">
                     {% csrf_token %}
                     {{ cadastro_form.as_p }}  <!-- Formulário de Cadastro -->
-                    <button type="submit" class="btn btn-success">Cadastrar</button>
                 </form>
             </div>
         </div>
