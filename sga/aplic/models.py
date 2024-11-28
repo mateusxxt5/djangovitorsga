@@ -1,6 +1,9 @@
 import uuid
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
+from django.utils import timezone  # Importe esta biblioteca
+from django.conf import settings  # Importe settings
 
 class Categoria(models.Model):
     nome = models.CharField(max_length=100)
@@ -20,27 +23,26 @@ class Produto(models.Model):
         return self.nome
 
 class Cliente(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,  # Use esta referência 
+        on_delete=models.CASCADE,
+        default=1  # Assume que existe um usuário com ID 1
+    )
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    endereco = models.TextField()
-    
-    # CPF field with validation
     cpf = models.CharField(
         max_length=14, 
         unique=True, 
+        default='000.000.000-00',
         validators=[
             RegexValidator(
                 regex=r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', 
-                message='CPF must be in the format XXX.XXX.XXX-XX'
+                message='CPF deve estar no formato XXX.XXX.XXX-XX'
             )
         ]
     )
-    
-    # Date of birth field
-    data_nascimento = models.DateField()
-    
-    # Password field (Note: In a real Django project, use Django's built-in authentication)
-    senha = models.CharField(max_length=128)
+    data_nascimento = models.DateField(default=timezone.now)
+    endereco = models.TextField(blank=True)
 
     def __str__(self):
         return self.nome
