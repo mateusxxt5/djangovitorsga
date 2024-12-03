@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    IndexView,
     listar_produtos,
     registro_login,
     sair,
@@ -10,7 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('', listar_produtos, name='index'),  # Página principal configurada como 'index'
+    path('', IndexView.as_view(), name='index'),  # Página principal usando IndexView
     path('produtos/', listar_produtos, name='produtos'),  # Página de listagem de produtos
     path('login/', registro_login, name='login'),  # Página de login e cadastro
     path('logout/', sair, name='logout'),  # Logout

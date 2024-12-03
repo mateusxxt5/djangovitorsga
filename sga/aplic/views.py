@@ -37,6 +37,7 @@ class ProdutosView(ListView):
             queryset = queryset.filter(categoria__id=categoria_id)
         return queryset
 
+
 def listar_produtos(request):
     categorias = Categoria.objects.all()
     categoria_selecionada = request.GET.get('categoria')  # Obter categoria selecionada
@@ -52,38 +53,34 @@ def listar_produtos(request):
     })
 
 
-@login_required
+@login_required(login_url='/login/')  # Redireciona para a página de login
 def carrinho(request):
     pedido = Pedido.objects.filter(cliente=request.user, status='A').first()
     itens = pedido.itens.all() if pedido else []
+    if not itens:
+        messages.info(request, "Seu carrinho está vazio.")
     return render(request, 'carrinho.html', {'pedido': pedido, 'itens': itens})
 
 
-@login_required
+@login_required(login_url='/login/')  # Redireciona para a página de login
 def adicionar_ao_carrinho(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
-    quantidade = int(request.POST.get('quantidade', 1))  # Obtém a quantidade do formulário
-    pedido, created = Pedido.objects.get_or_create(cliente=request.user, status='A')  # Pedido ativo
+    pedido, created = Pedido.objects.get_or_create(cliente=request.user, status='A')
 
-    # Verifica se o item já está no pedido
     item, item_created = ItemPedido.objects.get_or_create(pedido=pedido, produto=produto)
     if not item_created:
-        item.quantidade += quantidade
-    else:
-        item.quantidade = quantidade
-
+        item.quantidade += 1
     item.preco_unitario = produto.preco
     item.subtotal = item.quantidade * item.preco_unitario
     item.save()
 
-    # Atualiza o total do pedido
     pedido.calcular_total()
 
-    messages.success(request, f"{produto.nome} adicionado ao carrinho.")
-    return redirect('carrinho')
+    messages.success(request, f"{produto.nome} foi adicionado ao carrinho.")
+    return redirect('produtos')
 
 
-@login_required
+@login_required(login_url='/login/')  # Redireciona para a página de login
 def remover_do_carrinho(request, item_id):
     item = get_object_or_404(ItemPedido, id=item_id, pedido__cliente=request.user, pedido__status='A')
     if item:
@@ -96,7 +93,7 @@ def remover_do_carrinho(request, item_id):
     return redirect('carrinho')
 
 
-@login_required
+@login_required(login_url='/login/')  # Redireciona para a página de login
 def finalizar_compra(request):
     pedido = Pedido.objects.filter(cliente=request.user, status='A').first()
     if pedido:
@@ -112,6 +109,9 @@ def finalizar_compra(request):
 def registro_login(request):
     form = ClienteCreationForm()  # Inicializa o formulário sempre
 
+    if request.GET.get('next'):
+        messages.warning(request, "Você precisa estar logado para acessar esta página.")
+
     if request.method == 'POST':
         # Verificar se é login
         if 'username_login' in request.POST:
@@ -121,7 +121,7 @@ def registro_login(request):
             if user:
                 login(request, user)
                 messages.success(request, f"Bem-vindo(a), {user.username}! Login realizado com sucesso.")
-                return redirect('index')  # Redirecionar para a página inicial
+                return redirect(request.GET.get('next', 'index'))  # Redirecionar para a página desejada
             else:
                 messages.error(request, "Usuário ou senha inválidos. Tente novamente.")
                 return redirect('login')
@@ -138,6 +138,7 @@ def registro_login(request):
                 messages.error(request, "Erro no cadastro. Verifique os dados fornecidos.")
 
     return render(request, 'login_cadastro.html', {'form': form})
+
 
 # Logout
 @login_required
