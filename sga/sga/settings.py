@@ -114,7 +114,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Arquivos estáticos da aplicação
+    BASE_DIR / 'static',  # Caminho correto para os arquivos estáticos
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Diretório de coleta para produção
 
