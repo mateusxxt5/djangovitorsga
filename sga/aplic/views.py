@@ -98,14 +98,14 @@ def remover_do_carrinho(request, item_id):
 
 @login_required
 def finalizar_compra(request):
-    pedido = get_object_or_404(Pedido, cliente=request.user, status='A')
-    if pedido.itens.exists():
+    pedido = Pedido.objects.filter(cliente=request.user, status='A').first()
+    if pedido:
         pedido.status = 'F'
         pedido.save()
-        messages.success(request, "Compra finalizada com sucesso!")
+        messages.success(request, "Pedido enviado com sucesso! Obrigado por comprar conosco.")
     else:
-        messages.error(request, "Não é possível finalizar um pedido vazio.")
-    return redirect('index')
+        messages.error(request, "Não há nenhum pedido aberto para finalizar.")
+    return redirect('index')  # Redireciona para a página principal
 
 
 # Login e Cadastro Unificado
