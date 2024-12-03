@@ -1,54 +1,63 @@
 {% extends 'base.html' %}
 
+{% load static %} <!-- Adicionado para carregar arquivos estáticos -->
+
 {% block title %}Produtos - Smart Padoca{% endblock %}
 
 {% block content %}
-    <!-- Título da página de produtos -->
-    <div class="container py-4">
-        <h1 class="text-center">Produtos</h1>
-        
-        <!-- Filtro de Categorias -->
-        <div class="row mb-4">
-            <div class="col-md-4 mx-auto">
-                <form method="get" class="d-flex">
-                    <select name="categoria" class="form-select me-2" onchange="this.form.submit()">
-                        <option value="">Todas as Categorias</option>
-                        {% for categoria in Categorias %}
-                        <option value="{{ categoria.id }}" 
-                                {% if Categoria_Selecionada == categoria.id|stringformat:'s' %}selected{% endif %}>
-                            {{ categoria.nome }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </form>
-            </div>
+<div class="container py-4">
+    <!-- Título da página -->
+    <h1 class="text-center mb-4">Produtos</h1>
+
+    <!-- Filtro de Categorias -->
+    <div class="row mb-4">
+        <div class="col-md-6 mx-auto">
+            <form method="get" class="d-flex">
+                <select name="categoria" class="form-select me-2" onchange="this.form.submit()">
+                    <option value="">Todas as Categorias</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" 
+                            {% if categoria_selecionada == categoria.id|stringformat:'s' %}selected{% endif %}>
+                        {{ categoria.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
     </div>
-
     <!-- Cards de Produtos -->
-    <div class="container">
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-          {% for Produto in Produtos %}
-          <div class="col">
-              <div class="card h-100 shadow-sm">
-                  <img src="{{ Produto.imagem.url }}" alt="{{ Produto.nome }}" class="card-img-top" style="object-fit: cover; height: 200px;">
-                  <div class="card-body d-flex flex-column justify-content-between">
-                      <div>
-                          <h5 class="card-title">{{ Produto.nome }}</h5>
-                          <p class="card-text text-muted">{{ Produto.descricao }}</p>
-                          <p class="card-text">
-                              <small class="text-muted">
-                                  Categoria: {{ Produto.categoria.nome }}
-                              </small>
-                          </p>
-                      </div>
-                      <div class="d-flex justify-content-between align-items-center mt-3">
-                          <button type="button" class="btn btn-warning w-100">Adicionar Ao Carrinho</button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          {% endfor %}
-      </div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+        {% for produto in produtos %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                {% if produto.imagem %}
+                <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}" class="card-img-top" style="object-fit: cover; height: 200px;">
+                {% else %}
+                <img src="{% static 'produtos/default-product.jpg' %}" alt="Imagem padrão" class="card-img-top" style="object-fit: cover; height: 200px;">
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ produto.nome }}</h5>
+                    <p class="card-text">{{ produto.descricao }}</p>
+                    <p class="text-muted"><small>Categoria: {{ produto.categoria.nome }}</small></p>
+                    <p class="fw-bold text-primary">Preço: R$ {{ produto.preco }}</p>
+                    <form method="POST" action="{% url 'adicionar_ao_carrinho' produto.id %}">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <input type="number" name="quantidade" class="form-control" value="1" min="1" max="100" required>
+                            <button type="submit" class="btn btn-warning">Adicionar ao Carrinho</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+
+    <!-- Caso não existam produtos -->
+    {% if not produtos %}
+    <div class="alert alert-warning text-center mt-4">
+        Nenhum produto encontrado para esta categoria.
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

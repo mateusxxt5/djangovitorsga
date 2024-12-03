@@ -1,105 +1,147 @@
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView
-from django.contrib.auth.views import LoginView
-from django.views.generic.edit import FormView
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-from django.shortcuts import redirect, render
-from .models import Produto, Categoria
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .forms import ClienteForm
-from .models import Cliente
+from .models import Produto, Categoria, Cliente, Pedido, ItemPedido
+from .forms import ClienteCreationForm
+
 
 # Página principal
 class IndexView(TemplateView):
     template_name = 'index.html'
 
     def get_context_data(self, **kwargs):
-        context = super(IndexView, self).get_context_data(**kwargs)
-        context['Produtos'] = Produto.objects.order_by('-nome').all()
+        context = super().get_context_data(**kwargs)
+        context['produtos'] = Produto.objects.order_by('-data_criacao')[:10]  # Ordena por data de criação
         return context
+
 
 # Página de Produtos
 class ProdutosView(ListView):
     model = Produto
     template_name = 'produtos.html'
-    context_object_name = 'Produtos'
+    context_object_name = 'produtos'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['Categorias'] = Categoria.objects.all()
-        
-        # Filtro de categoria
+        context['categorias'] = Categoria.objects.all()  # Todas as categorias
         categoria_selecionada = self.request.GET.get('categoria')
-        context['Categoria_Selecionada'] = categoria_selecionada
-        
+        context['categoria_selecionada'] = categoria_selecionada  # Define a categoria selecionada
         return context
 
     def get_queryset(self):
         queryset = Produto.objects.all()
-        categoria_selecionada = self.request.GET.get('categoria')
-        
-        if categoria_selecionada:
-            queryset = queryset.filter(categoria__id=categoria_selecionada)
-        
+        categoria_id = self.request.GET.get('categoria')  # Obtém o ID da categoria da query string
+        if categoria_id:  # Se houver uma categoria selecionada
+            queryset = queryset.filter(categoria__id=categoria_id)
         return queryset
 
-# Outras views permanecem as mesmas
-class CustomLoginView(LoginView):
-    template_name = 'login_cadastro.html'
-    redirect_authenticated_user = True
+def listar_produtos(request):
+    categorias = Categoria.objects.all()
+    categoria_selecionada = request.GET.get('categoria')  # Obter categoria selecionada
+    if categoria_selecionada:
+        produtos = Produto.objects.filter(categoria__id=categoria_selecionada)
+    else:
+        produtos = Produto.objects.all()
 
-class CadastroView(FormView):
-    template_name = 'login_cadastro.html'
-    form_class = UserCreationForm
-    success_url = '/'
+    return render(request, 'produtos.html', {
+        'categorias': categorias,
+        'produtos': produtos,
+        'categoria_selecionada': categoria_selecionada
+    })
 
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        return redirect(self.success_url)
-    
 
+@login_required
+def carrinho(request):
+    pedido = Pedido.objects.filter(cliente=request.user, status='A').first()
+    itens = pedido.itens.all() if pedido else []
+    return render(request, 'carrinho.html', {'pedido': pedido, 'itens': itens})
+
+
+@login_required
+def adicionar_ao_carrinho(request, produto_id):
+    produto = get_object_or_404(Produto, id=produto_id)
+    quantidade = int(request.POST.get('quantidade', 1))  # Obtém a quantidade do formulário
+    pedido, created = Pedido.objects.get_or_create(cliente=request.user, status='A')  # Pedido ativo
+
+    # Verifica se o item já está no pedido
+    item, item_created = ItemPedido.objects.get_or_create(pedido=pedido, produto=produto)
+    if not item_created:
+        item.quantidade += quantidade
+    else:
+        item.quantidade = quantidade
+
+    item.preco_unitario = produto.preco
+    item.subtotal = item.quantidade * item.preco_unitario
+    item.save()
+
+    # Atualiza o total do pedido
+    pedido.calcular_total()
+
+    messages.success(request, f"{produto.nome} adicionado ao carrinho.")
+    return redirect('carrinho')
+
+
+@login_required
+def remover_do_carrinho(request, item_id):
+    item = get_object_or_404(ItemPedido, id=item_id, pedido__cliente=request.user, pedido__status='A')
+    if item:
+        pedido = item.pedido
+        item.delete()
+        pedido.calcular_total()
+        messages.success(request, "Item removido do carrinho.")
+    else:
+        messages.error(request, "O item não existe ou já foi removido.")
+    return redirect('carrinho')
+
+
+@login_required
+def finalizar_compra(request):
+    pedido = get_object_or_404(Pedido, cliente=request.user, status='A')
+    if pedido.itens.exists():
+        pedido.status = 'F'
+        pedido.save()
+        messages.success(request, "Compra finalizada com sucesso!")
+    else:
+        messages.error(request, "Não é possível finalizar um pedido vazio.")
+    return redirect('index')
+
+
+# Login e Cadastro Unificado
 def registro_login(request):
+    form = ClienteCreationForm()  # Inicializa o formulário sempre
+
     if request.method == 'POST':
-        # Verificar se é um formulário de login
-        if 'email_login' in request.POST:
-            email = request.POST['email_login']
-            senha = request.POST['senha_login']
-            user = authenticate(request, username=email, password=senha)
-            if user is not None:
+        # Verificar se é login
+        if 'username_login' in request.POST:
+            username = request.POST.get('username_login')
+            senha = request.POST.get('senha_login')
+            user = authenticate(request, username=username, password=senha)
+            if user:
                 login(request, user)
-                return redirect('pagina_inicial')
+                messages.success(request, f"Bem-vindo(a), {user.username}! Login realizado com sucesso.")
+                return redirect('index')  # Redirecionar para a página inicial
             else:
-                messages.error(request, 'Credenciais inválidas')
+                messages.error(request, "Usuário ou senha inválidos. Tente novamente.")
+                return redirect('login')
 
-        # Verificar se é um formulário de cadastro
-        elif 'email' in request.POST:
-            form = ClienteForm(request.POST)
+        # Verificar se é cadastro
+        elif 'username' in request.POST:
+            form = ClienteCreationForm(request.POST)  # Recria o formulário com os dados POST
             if form.is_valid():
-                # Cria usuário no sistema de autenticação do Django
-                user = user.objects.create_user(
-                    username=form.cleaned_data['email'],
-                    email=form.cleaned_data['email'],
-                    password=form.cleaned_data['senha']
-                )
-                
-                # Cria cliente no modelo personalizado
-                cliente = form.save(commit=False)
-                cliente.user = user  # Adicione um campo user no modelo Cliente
-                cliente.save()
-                
+                user = form.save()
                 login(request, user)
-                messages.success(request, 'Cadastro realizado com sucesso!')
-                return redirect('pagina_inicial')
+                messages.success(request, "Cadastro realizado com sucesso! Você está logado.")
+                return redirect('index')  # Redirecionar para a página inicial após cadastro
             else:
-                # Renderiza o formulário novamente com os erros
-                return render(request, 'registro_login.html', {'form': form})
+                messages.error(request, "Erro no cadastro. Verifique os dados fornecidos.")
 
-    # Se for GET, renderiza o formulário em branco
-    form = ClienteForm()
-    return render(request, 'registro_login.html', {'form': form})
+    return render(request, 'login_cadastro.html', {'form': form})
 
+# Logout
+@login_required
 def sair(request):
     logout(request)
-    return redirect('pagina_inicial')
+    messages.success(request, "Você saiu da sua conta com sucesso.")
+    return redirect('index')

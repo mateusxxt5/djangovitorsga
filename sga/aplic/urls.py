@@ -1,12 +1,21 @@
 from django.urls import path
-from . import views
-from .views import registro_login, sair
+from .views import (
+    listar_produtos,
+    registro_login,
+    sair,
+    carrinho,
+    adicionar_ao_carrinho,
+    remover_do_carrinho,
+    finalizar_compra,
+)
 
 urlpatterns = [
-    path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('cadastro/', views.CadastroView.as_view(), name='cadastro'),
-    path('', views.IndexView.as_view(), name='index'),
-    path('produtos/', views.ProdutosView.as_view(), name='produtos'),
-    path('registro-login/', registro_login, name='registro_login'),
-    path('sair/', sair, name='sair'),
+    path('', listar_produtos, name='index'),  # Página principal configurada como 'index'
+    path('produtos/', listar_produtos, name='produtos'),  # Página de listagem de produtos
+    path('login/', registro_login, name='login'),  # Página de login e cadastro
+    path('logout/', sair, name='logout'),  # Logout
+    path('carrinho/', carrinho, name='carrinho'),  # Página do carrinho
+    path('carrinho/adicionar/<int:produto_id>/', adicionar_ao_carrinho, name='adicionar_ao_carrinho'),  # Adicionar ao carrinho
+    path('carrinho/remover/<int:item_id>/', remover_do_carrinho, name='remover_do_carrinho'),  # Remover do carrinho
+    path('carrinho/finalizar/', finalizar_compra, name='finalizar_compra'),  # Finalizar compra
 ]
