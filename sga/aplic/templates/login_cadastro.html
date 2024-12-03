@@ -25,13 +25,36 @@
             <h2>Cadastro</h2>
             <form method="post" action="">
                 {% csrf_token %}
-                {{ form.as_p }}  <!-- Renderiza os campos do formulário ClienteCreationForm -->
+                <!-- Exibe erros globais do formulário -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <!-- Renderiza os campos do formulário com erros -->
+                {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    <!-- Exibe os erros de cada campo -->
+                    {% if field.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in field.errors %}
+                        <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
                 <button type="submit" class="btn btn-success">Cadastrar</button>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Exibe mensagens globais de sucesso ou erro -->
 {% if messages %}
 <div class="container mt-3">
     {% for message in messages %}

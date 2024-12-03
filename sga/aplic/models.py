@@ -119,7 +119,6 @@ class ItemPedido(models.Model):
     def __str__(self):
         return f'{self.quantidade} x {self.produto.nome} - Pedido {self.pedido.id}'
 
-
     class Meta:
         verbose_name = "Item do Pedido"
         verbose_name_plural = "Itens do Pedido"

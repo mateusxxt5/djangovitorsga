@@ -57,9 +57,12 @@ def listar_produtos(request):
 def carrinho(request):
     pedido = Pedido.objects.filter(cliente=request.user, status='A').first()
     itens = pedido.itens.all() if pedido else []
+    total = sum(item.subtotal for item in itens) if itens else 0
+
     if not itens:
         messages.info(request, "Seu carrinho está vazio.")
-    return render(request, 'carrinho.html', {'pedido': pedido, 'itens': itens})
+
+    return render(request, 'carrinho.html', {'pedido': pedido, 'itens': itens, 'total': total})
 
 
 @login_required(login_url='/login/')  # Redireciona para a página de login
@@ -67,16 +70,27 @@ def adicionar_ao_carrinho(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
     pedido, created = Pedido.objects.get_or_create(cliente=request.user, status='A')
 
+    # Obtém a quantidade enviada no formulário, padrão é 1
+    quantidade = int(request.POST.get('quantidade', 1))
+
+    # Procura o item no pedido ou cria um novo
     item, item_created = ItemPedido.objects.get_or_create(pedido=pedido, produto=produto)
     if not item_created:
-        item.quantidade += 1
+        # Atualiza a quantidade do item existente
+        item.quantidade += quantidade
+    else:
+        # Define a quantidade para um novo item
+        item.quantidade = quantidade
+
+    # Atualiza o subtotal e salva o item
     item.preco_unitario = produto.preco
     item.subtotal = item.quantidade * item.preco_unitario
     item.save()
 
+    # Recalcula o total do pedido
     pedido.calcular_total()
 
-    messages.success(request, f"{produto.nome} foi adicionado ao carrinho.")
+    messages.success(request, f"{quantidade} unidade(s) de {produto.nome} foram adicionadas ao carrinho.")
     return redirect('produtos')
 
 
@@ -135,7 +149,10 @@ def registro_login(request):
                 messages.success(request, "Cadastro realizado com sucesso! Você está logado.")
                 return redirect('index')  # Redirecionar para a página inicial após cadastro
             else:
-                messages.error(request, "Erro no cadastro. Verifique os dados fornecidos.")
+                # Enviar mensagens de erro para o template
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
 
     return render(request, 'login_cadastro.html', {'form': form})
 

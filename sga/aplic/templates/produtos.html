@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% load static %} <!-- Adicionado para carregar arquivos estáticos -->
+{% load static %} <!-- Para carregar arquivos estáticos -->
 
 {% block title %}Produtos - Smart Padoca{% endblock %}
 
@@ -25,11 +25,24 @@
             </form>
         </div>
     </div>
+
+    <!-- Mensagens Globais -->
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+        <div class="alert alert-info">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Cards de Produtos -->
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
         {% for produto in produtos %}
         <div class="col">
             <div class="card h-100 shadow-sm">
+                <!-- Exibe a imagem do produto ou uma imagem padrão -->
                 {% if produto.imagem %}
                 <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}" class="card-img-top" style="object-fit: cover; height: 200px;">
                 {% else %}
@@ -37,7 +50,7 @@
                 {% endif %}
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">{{ produto.nome }}</h5>
-                    <p class="card-text">{{ produto.descricao }}</p>
+                    <p class="card-text text-truncate">{{ produto.descricao }}</p>
                     <p class="text-muted"><small>Categoria: {{ produto.categoria.nome }}</small></p>
                     <p class="fw-bold text-primary">Preço: R$ {{ produto.preco }}</p>
                     <form method="POST" action="{% url 'adicionar_ao_carrinho' produto.id %}">
@@ -59,5 +72,36 @@
         Nenhum produto encontrado para esta categoria.
     </div>
     {% endif %}
+
+    <!-- Paginação (opcional) -->
+    <div class="d-flex justify-content-center mt-4">
+        {% if is_paginated %}
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if categoria_selecionada %}categoria={{ categoria_selecionada }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                    <a class="page-link" href="?{% if categoria_selecionada %}categoria={{ categoria_selecionada }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if categoria_selecionada %}categoria={{ categoria_selecionada }}&{% endif %}page={{ page_obj.next_page_number }}">Próximo</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
